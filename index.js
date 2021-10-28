@@ -4,6 +4,7 @@
 const express = require('express')
 const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
+require('dotenv').config()
 const cors = require('cors')
 const app = express()
 const port = 5000;
@@ -12,7 +13,8 @@ const port = 5000;
 app.use(cors())
 app.use(express.json())
 
-const uri = "mongodb+srv://mydbuser1:ZrIKHwah8M5tpBcG@cluster0.ayr4p.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ayr4p.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+console.log(uri)
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 async function run() {
@@ -35,6 +37,22 @@ async function run() {
             const user = await userCollection.findOne(query)
             console.log('load user id', id);
             res.send(user)
+        })
+
+        app.put('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const updateUser = req.body;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: updateUser.name,
+                    email: updateUser.email
+                },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options)
+            console.log('hitting the id:', id)
+            res.send(result)
         })
 
         // Post API
